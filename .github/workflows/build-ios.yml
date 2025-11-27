@@ -1,43 +1,32 @@
-name Build iOS IPA
+name: Build iOS IPA
 
-on
-  workflow_dispatch   # Puedes lanzarlo manualmente desde GitHub
-  push
-    branches
-      - main
-      - master
+on:
+  workflow_dispatch:
 
-jobs
-  build-ios
-    runs-on macos-latest
+jobs:
+  build-ios:
+    runs-on: macos-latest
 
-    steps
-      - name Checkout repository
-        uses actionscheckout@v3
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - name Install Flutter
-        uses subositoflutter-action@v2
-        with
-          flutter-version 3.22.0   # Cambia si usas otra versión
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
 
-      - name Flutter clean
-        run flutter clean
+      - name: Install dependencies
+        run: flutter pub get
 
-      - name Get Flutter dependencies
-        run flutter pub get
+      - name: Enable iOS
+        run: flutter config --enable-ios
 
-      - name Enable iOS signing with automatic provisioning
-        run 
-          cd ios
-          xcodebuild -allowProvisioningUpdates
-          cd ..
+      - name: Build IPA (debug)
+        run: flutter build ipa --no-codesign
 
-      - name Build IPA
-        run 
-          flutter build ipa --release
-
-      - name Upload IPA Artifact
-        uses actionsupload-artifact@v4
-        with
-          name app-ipa
-          path buildiosipa.ipa
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: build/ios/ipa/*.ipa
