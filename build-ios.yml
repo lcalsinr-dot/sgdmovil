@@ -1,0 +1,43 @@
+name Build iOS IPA
+
+on
+  workflow_dispatch   # Puedes lanzarlo manualmente desde GitHub
+  push
+    branches
+      - main
+      - master
+
+jobs
+  build-ios
+    runs-on macos-latest
+
+    steps
+      - name Checkout repository
+        uses actionscheckout@v3
+
+      - name Install Flutter
+        uses subositoflutter-action@v2
+        with
+          flutter-version 3.22.0   # Cambia si usas otra versión
+
+      - name Flutter clean
+        run flutter clean
+
+      - name Get Flutter dependencies
+        run flutter pub get
+
+      - name Enable iOS signing with automatic provisioning
+        run 
+          cd ios
+          xcodebuild -allowProvisioningUpdates
+          cd ..
+
+      - name Build IPA
+        run 
+          flutter build ipa --release
+
+      - name Upload IPA Artifact
+        uses actionsupload-artifact@v4
+        with
+          name app-ipa
+          path buildiosipa.ipa
